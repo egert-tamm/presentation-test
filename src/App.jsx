@@ -1,8 +1,12 @@
-import { useState, useEffect } from "react";
+import { useState, useEffect, useRef, useCallback } from "react";
 import { createRoot } from "react-dom/client";
 import { B, W, H } from "./constants";
 import { SYSTEM } from "./prompt";
 import { SlideView } from "./components/SlideView";
+
+const MIN_ZOOM = 0.15;
+const MAX_ZOOM = 2;
+const ZOOM_STEP = 0.05;
 
 function App() {
   const [apiKey, setApiKey] = useState(() => localStorage.getItem("yolo_api_key") || "");
@@ -74,8 +78,24 @@ function App() {
     });
   }, [slides]);
 
-  const SCALE = 0.55;
+  const [zoom, setZoom] = useState(0.55);
+  const canvasRef = useRef(null);
   const THUMB = 200 / W;
+
+  const fitToScreen = useCallback(() => setZoom(0.55), []);
+
+  const handleWheel = useCallback((e) => {
+    if (!e.ctrlKey && !e.metaKey) return;
+    e.preventDefault();
+    setZoom(z => Math.min(MAX_ZOOM, Math.max(MIN_ZOOM, z - e.deltaY * 0.001)));
+  }, []);
+
+  useEffect(() => {
+    const el = canvasRef.current;
+    if (!el) return;
+    el.addEventListener("wheel", handleWheel, { passive: false });
+    return () => el.removeEventListener("wheel", handleWheel);
+  }, [handleWheel]);
 
   return (
     <div style={{ fontFamily: B.bFont, background: "#111", minHeight: "100vh", color: "#fff" }}>
@@ -136,13 +156,22 @@ function App() {
         </div>
 
         {/* Main viewer */}
-        <div style={{ flex: 1, display: "flex", alignItems: "center", justifyContent: "center", background: "#0d0d0d", position: "relative" }}>
+        <div ref={canvasRef} style={{ flex: 1, display: "flex", alignItems: "center", justifyContent: "center", background: "#0d0d0d", position: "relative", overflow: "hidden" }}>
           {slides.length > 0 ? (
             <>
-              <button onClick={() => setCurrent(Math.max(0, current - 1))} disabled={current === 0} style={{ position: "absolute", left: 14, background: "rgba(255,255,255,0.07)", border: "none", borderRadius: "50%", width: 38, height: 38, fontSize: 18, color: "#fff", cursor: current === 0 ? "not-allowed" : "pointer", opacity: current === 0 ? 0.2 : 0.7 }}>‹</button>
-              <button onClick={() => setCurrent(Math.min(slides.length - 1, current + 1))} disabled={current === slides.length - 1} style={{ position: "absolute", right: 14, background: "rgba(255,255,255,0.07)", border: "none", borderRadius: "50%", width: 38, height: 38, fontSize: 18, color: "#fff", cursor: current === slides.length - 1 ? "not-allowed" : "pointer", opacity: current === slides.length - 1 ? 0.2 : 0.7 }}>›</button>
-              <div style={{ boxShadow: "0 20px 80px rgba(0,0,0,0.7)", borderRadius: 6, overflow: "hidden", transform: "scale(" + SCALE + ")" }}>
+              <button onClick={() => setCurrent(Math.max(0, current - 1))} disabled={current === 0} style={{ position: "absolute", left: 14, background: "rgba(255,255,255,0.07)", border: "none", borderRadius: "50%", width: 38, height: 38, fontSize: 18, color: "#fff", cursor: current === 0 ? "not-allowed" : "pointer", opacity: current === 0 ? 0.2 : 0.7, zIndex: 10 }}>‹</button>
+              <button onClick={() => setCurrent(Math.min(slides.length - 1, current + 1))} disabled={current === slides.length - 1} style={{ position: "absolute", right: 14, background: "rgba(255,255,255,0.07)", border: "none", borderRadius: "50%", width: 38, height: 38, fontSize: 18, color: "#fff", cursor: current === slides.length - 1 ? "not-allowed" : "pointer", opacity: current === slides.length - 1 ? 0.2 : 0.7, zIndex: 10 }}>›</button>
+              <div style={{ boxShadow: "0 20px 80px rgba(0,0,0,0.7)", borderRadius: 6, overflow: "hidden", transform: "scale(" + zoom + ")", transition: "transform 0.1s ease-out" }}>
                 <SlideView slide={slides[current]} index={current} total={slides.length} />
+              </div>
+
+              {/* Zoom controls */}
+              <div style={{ position: "absolute", bottom: 16, right: 16, display: "flex", alignItems: "center", gap: 4, background: "rgba(0,0,0,0.6)", borderRadius: 8, padding: "4px 6px", zIndex: 10 }}>
+                <button onClick={() => setZoom(z => Math.max(MIN_ZOOM, z - ZOOM_STEP))} style={{ background: "none", border: "none", color: "#fff", fontSize: 16, width: 28, height: 28, cursor: "pointer", borderRadius: 4, display: "flex", alignItems: "center", justifyContent: "center", opacity: 0.6 }}>−</button>
+                <button onClick={fitToScreen} style={{ background: "none", border: "none", color: "rgba(255,255,255,0.5)", fontSize: 11, fontFamily: B.bFont, cursor: "pointer", padding: "2px 6px", borderRadius: 4, minWidth: 48, textAlign: "center" }}>
+                  {Math.round(zoom * 100)}%
+                </button>
+                <button onClick={() => setZoom(z => Math.min(MAX_ZOOM, z + ZOOM_STEP))} style={{ background: "none", border: "none", color: "#fff", fontSize: 16, width: 28, height: 28, cursor: "pointer", borderRadius: 4, display: "flex", alignItems: "center", justifyContent: "center", opacity: 0.6 }}>+</button>
               </div>
             </>
           ) : (
