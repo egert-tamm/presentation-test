@@ -1,0 +1,256 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8"/>
+  <meta name="viewport" content="width=device-width,initial-scale=1.0"/>
+  <title>Yolo Slides Generator</title>
+  <link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@500;600;700&family=DM+Sans:ital,opsz,wght@0,9..40,400;0,9..40,500;1,9..40,400&display=swap" rel="stylesheet"/>
+  <style>
+    *,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
+    body{background:#111;font-family:'DM Sans',sans-serif;color:#fff;height:100vh;overflow:hidden}
+    @media print{body>*{display:none!important}#print-area{display:block!important;position:fixed;top:0;left:0;width:100%}.print-slide{page-break-after:always;display:flex;align-items:center;justify-content:center;height:100vh}}
+  </style>
+</head>
+<body>
+<div id="root"></div>
+<div id="print-area" style="display:none"></div>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/react/18.2.0/umd/react.production.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/react-dom/18.2.0/umd/react-dom.production.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/babel-standalone/7.23.2/babel.min.js"></script>
+<script type="text/babel">
+const{useState,useEffect}=React;
+const B={bg:"#f0f0f0",black:"#0a0a0a",dark:"#141414",orange:"#ff6200",white:"#ffffff",hFont:"'Space Grotesk',sans-serif",bFont:"'DM Sans',sans-serif",logo:"https://yolo.io/wp-content/uploads/2024/07/logo@2x.png"};
+const W=1024,H=576;
+
+const CubeDecor=({style={}})=>(<svg viewBox="0 0 400 400" style={{position:"absolute",pointerEvents:"none",...style}}>
+  <defs>
+    <linearGradient id="cg1" x1="0%" y1="0%" x2="100%" y2="100%"><stop offset="0%" stopColor="#ff8c00" stopOpacity="0.9"/><stop offset="100%" stopColor="#ff4400" stopOpacity="0.6"/></linearGradient>
+    <linearGradient id="cg2" x1="100%" y1="0%" x2="0%" y2="100%"><stop offset="0%" stopColor="#ffb347" stopOpacity="0.7"/><stop offset="100%" stopColor="#ff6200" stopOpacity="0.4"/></linearGradient>
+  </defs>
+  {[[80,40,180,40,180,140,80,140],[100,60,200,60,200,160,100,160],[120,80,220,80,220,180,120,180],[80,140,180,140,200,160,100,160],[80,40,100,60,100,160,80,140],[180,40,200,60,200,160,180,140],[200,100,300,100,300,200,200,200],[220,120,320,120,320,220,220,220],[240,140,340,140,340,240,240,240],[200,200,300,200,320,220,220,220],[200,100,220,120,220,220,200,200],[300,100,320,120,320,220,300,200]].map((pts,i)=>(
+    <polygon key={i} points={pts.join(",")} fill={i<3?"url(#cg1)":i<6?"rgba(255,150,0,0.3)":i<9?"rgba(255,120,0,0.5)":"rgba(255,180,50,0.25)"} stroke="rgba(255,255,255,0.12)" strokeWidth="0.5"/>
+  ))}
+</svg>);
+
+const WaveDecor=({style={},opacity=0.12})=>(<svg viewBox="0 0 800 800" style={{position:"absolute",pointerEvents:"none",...style}}>
+  <defs><linearGradient id="wg1" x1="0%" y1="0%" x2="100%" y2="100%"><stop offset="0%" stopColor="#888" stopOpacity="0"/><stop offset="50%" stopColor="#444" stopOpacity={opacity*2}/><stop offset="100%" stopColor="#888" stopOpacity="0"/></linearGradient></defs>
+  <ellipse cx="400" cy="400" rx="380" ry="120" fill="url(#wg1)" transform="rotate(-40 400 400)"/>
+  <ellipse cx="400" cy="400" rx="350" ry="80" fill="url(#wg1)" transform="rotate(-40 400 400) translate(60,-30)"/>
+  <ellipse cx="400" cy="400" rx="320" ry="60" fill="url(#wg1)" transform="rotate(-40 400 400) translate(-60,30)"/>
+</svg>);
+
+const GlowDecor=({style={}})=>(<svg viewBox="0 0 600 600" style={{position:"absolute",pointerEvents:"none",...style}}>
+  <defs><radialGradient id="gg1" cx="50%" cy="50%" r="50%"><stop offset="0%" stopColor="#ff6200" stopOpacity="0.18"/><stop offset="60%" stopColor="#ff6200" stopOpacity="0.06"/><stop offset="100%" stopColor="#ff6200" stopOpacity="0"/></radialGradient></defs>
+  <circle cx="300" cy="300" r="280" fill="url(#gg1)"/>
+</svg>);
+
+const Logo=({dark,style={}})=>(<img src={B.logo} alt="Yolo" style={{height:28,pointerEvents:"none",filter:dark?"brightness(0) invert(1)":"none",...style}}/>);
+const Footer=({page,total,dark})=>{
+  const c=dark?"rgba(255,255,255,0.4)":"rgba(0,0,0,0.35)";
+  const b=dark?"rgba(255,255,255,0.08)":"rgba(0,0,0,0.08)";
+  return(<div style={{position:"absolute",bottom:0,left:0,right:0,height:40,borderTop:"1px solid "+b,display:"flex",alignItems:"center",justifyContent:"space-between",padding:"0 18px",fontFamily:B.bFont,fontSize:10,color:c}}><span>Yolo Investments</span><span>{page}/{total}</span></div>);
+};
+const OP=({text,base=B.black})=>(<>{(text||"").split("||").map((p,i)=>(<span key={i} style={{color:i%2===1?B.orange:base}}>{p}</span>))}</>);
+
+const CoverSlide=({s,i,n})=>(<div style={{width:W,height:H,background:B.bg,position:"relative",overflow:"hidden"}}>
+  <WaveDecor style={{top:"-20%",left:"-10%",width:"110%",height:"110%"}} opacity={0.1}/>
+  <CubeDecor style={{top:-60,right:-40,width:380,height:380}}/>
+  <div style={{position:"absolute",top:0,right:22,background:B.black,borderRadius:"0 0 12px 12px",padding:"7px 14px"}}>
+    <span style={{fontFamily:B.bFont,fontSize:9.5,color:"rgba(255,255,255,0.6)",fontStyle:"italic"}}><b>Disclaimer: </b>Confidential — For Qualified Investors Only</span>
+  </div>
+  <Logo style={{position:"absolute",top:14,left:18}}/>
+  <div style={{position:"absolute",bottom:72,left:38}}>
+    <div style={{fontFamily:B.hFont,fontSize:66,fontWeight:700,lineHeight:0.92,letterSpacing:"-4px",color:B.black,whiteSpace:"pre-line"}}>{s.title}</div>
+    <div style={{fontFamily:B.hFont,fontSize:36,fontWeight:600,color:B.orange,letterSpacing:"-1.5px",marginTop:6,lineHeight:1.1}}>{s.subtitle}</div>
+  </div>
+  {s.tags&&<div style={{position:"absolute",bottom:44,left:42,fontFamily:B.bFont,fontSize:11,color:B.black}}>{s.tags}</div>}
+  <Footer page={i+1} total={n} dark={false}/>
+</div>);
+
+const StatsSidebarSlide=({s,i,n})=>(<div style={{width:W,height:H,background:B.bg,position:"relative",overflow:"hidden"}}>
+  <WaveDecor style={{top:"-20%",right:"-20%",width:"90%",height:"90%"}} opacity={0.07}/>
+  <CubeDecor style={{top:-20,right:140,width:300,height:300}}/>
+  <Logo style={{position:"absolute",top:14,left:18}}/>
+  <div style={{position:"absolute",top:6,right:6,width:296,bottom:40,display:"flex",flexDirection:"column",gap:6}}>
+    {(s.stats||[]).map((st,k)=>(<div key={k} style={{flex:1,background:B.white,borderRadius:18,padding:"14px 18px 10px",display:"flex",flexDirection:"column",justifyContent:"space-between"}}>
+      <div style={{fontFamily:B.hFont,fontSize:42,fontWeight:600,letterSpacing:"-3px",lineHeight:0.92,textAlign:"right",color:B.black}}>{st.value}</div>
+      <div style={{fontFamily:B.bFont,fontSize:12,color:B.black,opacity:0.48,lineHeight:1.2}}>{st.label}</div>
+    </div>))}
+  </div>
+  <div style={{position:"absolute",left:30,top:90,width:380}}>
+    <div style={{fontFamily:B.hFont,fontSize:38,fontWeight:700,color:B.black,letterSpacing:"-2px",lineHeight:0.92,marginBottom:18}}><OP text={s.headline}/></div>
+    <div style={{fontFamily:B.bFont,fontSize:12,color:B.black,opacity:0.65,lineHeight:1.55,marginBottom:12}}>{s.body1}</div>
+    <div style={{fontFamily:B.bFont,fontSize:12,color:B.black,opacity:0.65,lineHeight:1.55}}>{s.body2}</div>
+  </div>
+  <Footer page={i+1} total={n} dark={false}/>
+</div>);
+
+const GridCardsSlide=({s,i,n})=>(<div style={{width:W,height:H,background:B.bg,position:"relative",overflow:"hidden"}}>
+  <WaveDecor style={{top:"-20%",left:"0%",width:"100%",height:"100%"}} opacity={0.08}/>
+  <Logo style={{position:"absolute",top:14,left:18}}/>
+  <div style={{position:"absolute",left:30,top:78,width:296}}>
+    <div style={{fontFamily:B.hFont,fontSize:36,fontWeight:700,color:B.black,letterSpacing:"-2px",lineHeight:0.92,marginBottom:10}}><OP text={s.headline}/></div>
+    <div style={{fontFamily:B.bFont,fontSize:12,color:B.black,opacity:0.5,lineHeight:1.4}}>{s.subtext}</div>
+  </div>
+  <div style={{position:"absolute",top:6,right:6,width:582,bottom:40,display:"grid",gridTemplateColumns:"1fr 1fr",gridTemplateRows:"1fr 1fr",gap:6}}>
+    {(s.cards||[]).slice(0,4).map((c,k)=>(<div key={k} style={{background:B.white,borderRadius:18,padding:"14px 16px",display:"flex",flexDirection:"column",justifyContent:"space-between"}}>
+      <div style={{fontFamily:B.hFont,fontSize:22,fontWeight:700,letterSpacing:"-1.2px",lineHeight:1,color:B.black}}><OP text={c.title}/></div>
+      <div style={{fontFamily:B.bFont,fontSize:11,color:B.black,opacity:0.45,lineHeight:1.4}}>{c.body}</div>
+    </div>))}
+  </div>
+  <Footer page={i+1} total={n} dark={false}/>
+</div>);
+
+const ChapterSlide=({s,i,n})=>(<div style={{width:W,height:H,background:B.black,position:"relative",overflow:"hidden"}}>
+  <GlowDecor style={{top:"50%",left:"50%",transform:"translate(-50%,-60%)",width:700,height:700}}/>
+  <Logo dark style={{position:"absolute",top:14,left:18}}/>
+  <div style={{position:"absolute",top:"50%",left:"50%",transform:"translate(-50%,-50%)",textAlign:"center",width:700}}>
+    <div style={{fontFamily:B.hFont,fontSize:62,fontWeight:700,color:B.white,letterSpacing:"-4px",lineHeight:0.92,marginBottom:18}}>{s.title}</div>
+    <div style={{fontFamily:B.bFont,fontSize:15,color:"rgba(255,255,255,0.48)",fontStyle:"italic",lineHeight:1.3}}>{s.subtitle}</div>
+  </div>
+  <Footer page={i+1} total={n} dark/>
+</div>);
+
+const TeamSlide=({s,i,n})=>(<div style={{width:W,height:H,background:B.black,position:"relative",overflow:"hidden"}}>
+  <GlowDecor style={{top:"50%",left:"50%",transform:"translate(-50%,-60%)",width:700,height:700}}/>
+  <Logo dark style={{position:"absolute",top:14,left:18}}/>
+  <div style={{position:"absolute",top:18,left:"50%",transform:"translateX(-50%)",textAlign:"center",width:500}}>
+    <div style={{fontFamily:B.hFont,fontSize:38,fontWeight:700,color:B.white,letterSpacing:"-2px",lineHeight:0.95}}>{s.title}</div>
+    <div style={{fontFamily:B.bFont,fontSize:11,color:"rgba(255,255,255,0.45)",fontStyle:"italic",marginTop:7}}>{s.subtitle}</div>
+  </div>
+  <div style={{position:"absolute",top:126,left:8,right:8,bottom:44,display:"flex",gap:8}}>
+    {(s.people||[]).slice(0,3).map((p,k)=>(<div key={k} style={{flex:1,background:B.dark,borderRadius:18,padding:"14px 13px 12px",display:"flex",flexDirection:"column",gap:5}}>
+      <div style={{fontFamily:B.hFont,fontSize:16,fontWeight:600,color:B.white,letterSpacing:"-0.5px"}}>{p.name}</div>
+      <div style={{fontFamily:B.bFont,fontSize:13,color:B.orange,lineHeight:1.2}}>{p.role}</div>
+      <div style={{fontFamily:B.bFont,fontSize:10.5,color:"rgba(255,255,255,0.45)",lineHeight:1.45,marginTop:3,flex:1}}>{p.bio}</div>
+      <div style={{flex:1,background:"#222",borderRadius:12,minHeight:80,display:"flex",alignItems:"center",justifyContent:"center"}}>
+        <div style={{fontFamily:B.hFont,fontSize:28,fontWeight:700,color:"rgba(255,255,255,0.08)"}}>{p.name?.split(" ")[0]?.[0]}{p.name?.split(" ")[1]?.[0]}</div>
+      </div>
+    </div>))}
+  </div>
+  <Footer page={i+1} total={n} dark/>
+</div>);
+
+const PortfolioSlide=({s,i,n})=>(<div style={{width:W,height:H,background:B.black,position:"relative",overflow:"hidden"}}>
+  <GlowDecor style={{top:"50%",left:"50%",transform:"translate(-50%,-60%)",width:700,height:700}}/>
+  <Logo dark style={{position:"absolute",top:14,left:18}}/>
+  <div style={{position:"absolute",top:18,left:"50%",transform:"translateX(-50%)",textAlign:"center",width:580}}>
+    <div style={{fontFamily:B.hFont,fontSize:38,fontWeight:700,color:B.white,letterSpacing:"-2px",lineHeight:0.95}}>{s.title}</div>
+    <div style={{fontFamily:B.bFont,fontSize:11,color:"rgba(255,255,255,0.45)",fontStyle:"italic",marginTop:7}}>{s.subtitle}</div>
+  </div>
+  <div style={{position:"absolute",top:114,left:8,right:8,bottom:44,display:"grid",gridTemplateColumns:"repeat(4,1fr)",gridTemplateRows:"1fr 1fr",gap:6}}>
+    {(s.companies||[]).slice(0,8).map((c,k)=>(<div key={k} style={{background:B.dark,borderRadius:14,padding:"12px 13px 10px",display:"flex",flexDirection:"column",justifyContent:"space-between"}}>
+      <div style={{fontFamily:B.hFont,fontSize:14,fontWeight:700,color:B.white,letterSpacing:"-0.4px"}}>{c.name}</div>
+      <div style={{fontFamily:B.bFont,fontSize:10,color:"rgba(255,255,255,0.42)",lineHeight:1.35,marginTop:4}}>{c.desc}</div>
+      {c.tag&&<div style={{marginTop:5,fontFamily:B.bFont,fontSize:9,color:B.orange,fontStyle:"italic"}}>{c.tag}</div>}
+    </div>))}
+  </div>
+  <Footer page={i+1} total={n} dark/>
+</div>);
+
+const AdvantageSlide=({s,i,n})=>(<div style={{width:W,height:H,background:B.black,position:"relative",overflow:"hidden"}}>
+  <GlowDecor style={{top:"50%",left:"50%",transform:"translate(-50%,-60%)",width:700,height:700}}/>
+  <Logo dark style={{position:"absolute",top:14,left:18}}/>
+  <div style={{position:"absolute",top:14,left:"50%",transform:"translateX(-50%)",textAlign:"center",width:620}}>
+    <div style={{fontFamily:B.hFont,fontSize:38,fontWeight:700,color:B.white,letterSpacing:"-2px",lineHeight:0.95}}>{s.title}</div>
+    <div style={{fontFamily:B.bFont,fontSize:11,color:"rgba(255,255,255,0.45)",fontStyle:"italic",marginTop:6}}>{s.subtitle}</div>
+  </div>
+  <div style={{position:"absolute",top:114,left:8,right:8,bottom:s.body?66:44,display:"grid",gridTemplateColumns:"1fr 1fr",gap:6}}>
+    <div style={{display:"flex",flexDirection:"column",gap:6}}>
+      {(s.left||[]).map((item,k)=>(<div key={k} style={{flex:1,border:"1px solid rgba(255,255,255,"+(k===0?"0.45":"0.12")+")",borderRadius:12,padding:"9px 14px",display:"flex",flexDirection:"column",justifyContent:"center"}}>
+        <div style={{fontFamily:B.hFont,fontSize:14,fontWeight:600,color:B.white,letterSpacing:"-0.4px"}}>{item.name}</div>
+        <div style={{fontFamily:B.bFont,fontSize:10,color:"rgba(255,255,255,0.42)",marginTop:2}}>{item.desc}</div>
+      </div>))}
+    </div>
+    <div style={{display:"flex",flexDirection:"column",gap:6}}>
+      {(s.right||[]).map((item,k)=>(<div key={k} style={{flex:1,border:"1px solid rgba(255,255,255,"+(k===0?"0.45":"0.12")+")",borderRadius:12,padding:"9px 14px",display:"flex",flexDirection:"column",justifyContent:"center",textAlign:"right"}}>
+        <div style={{fontFamily:B.hFont,fontSize:14,fontWeight:600,color:B.white,letterSpacing:"-0.4px"}}>{item.name}</div>
+        <div style={{fontFamily:B.bFont,fontSize:10,color:"rgba(255,255,255,0.42)",marginTop:2}}>{item.desc}</div>
+      </div>))}
+    </div>
+  </div>
+  {s.body&&<div style={{position:"absolute",bottom:44,left:18,right:18,fontFamily:B.bFont,fontSize:10,color:"rgba(255,255,255,0.4)",lineHeight:1.5,textAlign:"center"}}>{s.body}</div>}
+  <Footer page={i+1} total={n} dark/>
+</div>);
+
+const CTASlide=({s,i,n})=>(<div style={{width:W,height:H,background:B.orange,position:"relative",overflow:"hidden"}}>
+  <WaveDecor style={{top:"-20%",right:"-10%",width:"90%",height:"90%"}} opacity={0.12}/>
+  <CubeDecor style={{bottom:-60,right:-40,width:260,height:260}}/>
+  <img src={B.logo} alt="Yolo" style={{position:"absolute",top:14,left:18,height:26,filter:"brightness(0)",opacity:0.6,pointerEvents:"none"}}/>
+  <div style={{position:"absolute",top:"50%",left:46,transform:"translateY(-50%)",maxWidth:580}}>
+    <div style={{fontFamily:B.hFont,fontSize:62,fontWeight:700,color:B.white,letterSpacing:"-4px",lineHeight:0.92,marginBottom:18}}>{s.headline}</div>
+    <div style={{fontFamily:B.bFont,fontSize:15,color:"rgba(255,255,255,0.85)",lineHeight:1.55}}>{s.body}</div>
+    {s.cta&&<div style={{marginTop:24,display:"inline-block",background:B.white,color:B.orange,fontFamily:B.hFont,fontSize:13,fontWeight:700,padding:"10px 24px",borderRadius:9}}>{s.cta}</div>}
+  </div>
+  <Footer page={i+1} total={n} dark/>
+</div>);
+
+const QuoteSlide=({s,i,n})=>(<div style={{width:W,height:H,background:B.black,position:"relative",overflow:"hidden"}}>
+  <GlowDecor style={{top:"50%",left:"50%",transform:"translate(-50%,-60%)",width:600,height:600}}/>
+  <Logo dark style={{position:"absolute",top:14,left:18}}/>
+  <div style={{position:"absolute",top:"50%",left:"50%",transform:"translate(-50%,-50%)",width:700,textAlign:"center"}}>
+    <div style={{fontFamily:B.hFont,fontSize:50,fontWeight:700,letterSpacing:"-3px",lineHeight:0.95,marginBottom:22}}><OP text={s.quote} base={B.white}/></div>
+    {s.attribution&&<div style={{fontFamily:B.bFont,fontSize:13,color:"rgba(255,255,255,0.45)",fontStyle:"italic"}}>— {s.attribution}</div>}
+  </div>
+  <Footer page={i+1} total={n} dark/>
+</div>);
+
+const SlideView=({slide,index,total})=>{
+  if(!slide)return null;
+  const p={s:slide,i:index,n:total};
+  switch(slide.type){
+    case"cover":return<CoverSlide {...p}/>;
+    case"stats_sidebar":return<StatsSidebarSlide {...p}/>;
+    case"grid_cards":return<GridCardsSlide {...p}/>;
+    case"chapter":return<ChapterSlide {...p}/>;
+    case"team":return<TeamSlide {...p}/>;
+    case"portfolio":return<PortfolioSlide {...p}/>;
+    case"advantage":return<AdvantageSlide {...p}/>;
+    case"cta":return<CTASlide {...p}/>;
+    case"quote":return<QuoteSlide {...p}/>;
+    default:return<ChapterSlide {...p}/>;
+  }
+};
+
+const SYSTEM=`You are a slide deck content generator for Yolo Investments — a fintech/crypto/gaming VC fund.
+Brand: orange #ff6200, light grey #f0f0f0, black. Fonts: Space Grotesk (headings), DM Sans (body).
+Return ONLY a valid raw JSON array — no markdown, no fences, no prose.
+
+Slide types:
+cover: { type:"cover", title:"multi-line\nheading", subtitle:"orange tagline", tags:"Tag · Tag" }
+stats_sidebar: { type:"stats_sidebar", headline:"Black||orange||black.", body1:"para", body2:"para", stats:[{value:"$2.4B",label:"desc"},{value:"47%",label:"desc"},{value:"12x",label:"desc"}] }
+grid_cards: { type:"grid_cards", headline:"Black||orange||black.", subtext:"subtitle", cards:[{title:"Card||Title",body:"desc"},{...},{...},{...}] }
+chapter: { type:"chapter", title:"Section heading", subtitle:"italic subtitle" }
+team: { type:"team", title:"Team headline", subtitle:"subtitle", people:[{name:"...",role:"...",bio:"..."},{...},{...}] }
+portfolio: { type:"portfolio", title:"Portfolio heading", subtitle:"subtitle", companies:[{name:"...",desc:"...",tag:"optional"}, ...8 max] }
+advantage: { type:"advantage", title:"Heading", subtitle:"subtitle", left:[{name:"...",desc:"..."},{...},{...}], right:[{name:"...",desc:"..."},{...},{...}], body:"footnote" }
+cta: { type:"cta", headline:"Big\nclosing line", body:"copy", cta:"Button text" }
+quote: { type:"quote", quote:"Statement||orange part||more black", attribution:"optional" }
+
+Generate 8 slides. Variety of layouts. Specific, bold, professional. No placeholders. Use || for orange highlights.`;
+
+function App(){
+  const[apiKey,setApiKey]=useState(()=>localStorage.getItem("yolo_api_key")||"");
+  const[keyInput,setKeyInput]=useState("");
+  const[keySet,setKeySet]=useState(()=>!!localStorage.getItem("yolo_api_key"));
+  const[topic,setTopic]=useState("");
+  const[slides,setSlides]=useState([]);
+  const[current,setCurrent]=useState(0);
+  const[loading,setLoading]=useState(false);
+  const[err,setErr]=useState("");
+
+  const saveKey=()=>{if(!keyInput.trim())return;localStorage.setItem("yolo_api_key",keyInput.trim());setApiKey(keyInput.trim());setKeySet(true);setKeyInput("");};
+  const clearKey=()=>{localStorage.removeItem("yolo_api_key");setApiKey("");setKeySet(false);};
+
+  const generate=async()=>{
+    if(!topic.trim()||!apiKey)return;
+    setLoading(true);setErr("");setSlides([]);
+    try{
+      const res=await fetch("https://api.anthropic.com/v1/messages",{method:"POST",headers:{"Content-Type":"application/json","x-api-key":apiKey,"anthropic-version":"2023-06-01","anthropic-dangerous-direct-browser-access":"true"},body:JSON.stringify({model:"claude-sonnet-4-20250514",max_tokens:4000,system:SYSTEM,messages:[{role:"user",content:`Generate a Yolo Investments deck about: "${topic}"`}]})});
+      if(!res.ok)throw new Error("API "+res.status);
+      const data=await res.json();
+      const raw=data.content.filter(b=>b.type==="text").map(b=>b.text).join("");
+      const m=raw.match(/\[[\s\S]*\]/);
+      if(!m)throw new Error("No JSON found");
+      setSlides(JSON.parse(m[0]));setCurrent(0);
+    }catch(e){setErr(e.message);}finally{setLo
