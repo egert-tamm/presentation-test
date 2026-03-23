@@ -14,4 +14,4 @@ cta: { type:"cta", headline:"Big\\nclosing line", body:"copy", cta:"Button text"
 quote: { type:"quote", quote:"Statement||orange part||more black", attribution:"optional" }
 
 Variety of layouts. Specific, bold, professional. No placeholders. Use || for orange highlights.
-The user will specify how many slides to generate. Follow their instruction on slide count.`;
+If the user specifies a slide count, follow it. Otherwise default to 8 slides.`;
