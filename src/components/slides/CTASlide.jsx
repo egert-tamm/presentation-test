@@ -1,10 +1,8 @@
 import { B, W, H } from "../../constants";
-import { WaveDecor, CubeDecor, Footer } from "../Decorations";
+import { Footer } from "../Decorations";
 
 export const CTASlide = ({ s, i, n }) => (
   <div style={{ width: W, height: H, background: B.orange, position: "relative", overflow: "hidden" }}>
-    <WaveDecor style={{ top: "-20%", right: "-10%", width: "90%", height: "90%" }} opacity={0.12} />
-    <CubeDecor style={{ bottom: -60, right: -40, width: 260, height: 260 }} />
     <img src={B.logo} alt="Yolo" style={{ position: "absolute", top: 14, left: 18, height: 26, filter: "brightness(0)", opacity: 0.6, pointerEvents: "none" }} />
     <div style={{ position: "absolute", top: "50%", left: 46, transform: "translateY(-50%)", maxWidth: 580 }}>
       <div style={{ fontFamily: B.hFont, fontSize: 62, fontWeight: 700, color: B.white, letterSpacing: "-4px", lineHeight: 0.92, marginBottom: 18 }}>{s.headline}</div>

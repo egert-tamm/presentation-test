@@ -1,10 +1,8 @@
 import { B, W, H } from "../../constants";
-import { WaveDecor, CubeDecor, Logo, Footer, OP } from "../Decorations";
+import { Logo, Footer, OP } from "../Decorations";
 
 export const StatsSidebarSlide = ({ s, i, n }) => (
   <div style={{ width: W, height: H, background: B.bg, position: "relative", overflow: "hidden" }}>
-    <WaveDecor style={{ top: "-20%", right: "-20%", width: "90%", height: "90%" }} opacity={0.07} />
-    <CubeDecor style={{ top: -20, right: 140, width: 300, height: 300 }} />
     <Logo style={{ position: "absolute", top: 14, left: 18 }} />
     <div style={{ position: "absolute", top: 6, right: 6, width: 296, bottom: 40, display: "flex", flexDirection: "column", gap: 6 }}>
       {(s.stats || []).map((st, k) => (

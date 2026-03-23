@@ -1,9 +1,8 @@
 import { B, W, H } from "../../constants";
-import { WaveDecor, Logo, Footer, OP } from "../Decorations";
+import { Logo, Footer, OP } from "../Decorations";
 
 export const GridCardsSlide = ({ s, i, n }) => (
   <div style={{ width: W, height: H, background: B.bg, position: "relative", overflow: "hidden" }}>
-    <WaveDecor style={{ top: "-20%", left: "0%", width: "100%", height: "100%" }} opacity={0.08} />
     <Logo style={{ position: "absolute", top: 14, left: 18 }} />
     <div style={{ position: "absolute", left: 30, top: 78, width: 296 }}>
       <div style={{ fontFamily: B.hFont, fontSize: 36, fontWeight: 700, color: B.black, letterSpacing: "-2px", lineHeight: 0.92, marginBottom: 10 }}><OP text={s.headline} /></div>

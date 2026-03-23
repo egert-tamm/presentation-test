@@ -1,9 +1,8 @@
 import { B, W, H } from "../../constants";
-import { GlowDecor, Logo, Footer } from "../Decorations";
+import { Logo, Footer } from "../Decorations";
 
 export const AdvantageSlide = ({ s, i, n }) => (
   <div style={{ width: W, height: H, background: B.black, position: "relative", overflow: "hidden" }}>
-    <GlowDecor style={{ top: "50%", left: "50%", transform: "translate(-50%,-60%)", width: 700, height: 700 }} />
     <Logo dark style={{ position: "absolute", top: 14, left: 18 }} />
     <div style={{ position: "absolute", top: 14, left: "50%", transform: "translateX(-50%)", textAlign: "center", width: 620 }}>
       <div style={{ fontFamily: B.hFont, fontSize: 38, fontWeight: 700, color: B.white, letterSpacing: "-2px", lineHeight: 0.95 }}>{s.title}</div>

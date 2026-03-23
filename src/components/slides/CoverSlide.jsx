@@ -1,10 +1,8 @@
 import { B, W, H } from "../../constants";
-import { WaveDecor, CubeDecor, Logo, Footer } from "../Decorations";
+import { Logo, Footer } from "../Decorations";
 
 export const CoverSlide = ({ s, i, n }) => (
   <div style={{ width: W, height: H, background: B.bg, position: "relative", overflow: "hidden" }}>
-    <WaveDecor style={{ top: "-20%", left: "-10%", width: "110%", height: "110%" }} opacity={0.1} />
-    <CubeDecor style={{ top: -60, right: -40, width: 380, height: 380 }} />
     <div style={{ position: "absolute", top: 0, right: 22, background: B.black, borderRadius: "0 0 12px 12px", padding: "7px 14px" }}>
       <span style={{ fontFamily: B.bFont, fontSize: 9.5, color: "rgba(255,255,255,0.6)", fontStyle: "italic" }}>
         <b>Disclaimer: </b>Confidential — For Qualified Investors Only
