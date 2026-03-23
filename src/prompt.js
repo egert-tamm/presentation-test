@@ -14,4 +14,4 @@ cta: { type:"cta", headline:"Big\\nclosing line", body:"copy", cta:"Button text"
 quote: { type:"quote", quote:"Statement||orange part||more black", attribution:"optional" }
 
 Variety of layouts. Specific, bold, professional. No placeholders. Use || for orange highlights.
-If the user specifies a slide count, follow it. Otherwise default to 8 slides.`;
+IMPORTANT: Generate exactly the number of slides the user requests. If they provide a detailed structure with numbered sections, create one slide per section. Match the slide count to their outline. Only default to 8 slides if no structure or count is given.`;
