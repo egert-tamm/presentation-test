@@ -3,6 +3,7 @@ import { createRoot } from "react-dom/client";
 import { B, W, H } from "./constants";
 import { SYSTEM } from "./prompt";
 import { SlideView } from "./components/SlideView";
+import { LayoutPicker } from "./components/LayoutPicker";
 
 const MIN_ZOOM = 0.15;
 const MAX_ZOOM = 2;
@@ -17,6 +18,8 @@ function App() {
   const [current, setCurrent] = useState(0);
   const [loading, setLoading] = useState(false);
   const [err, setErr] = useState("");
+  const [pickerIdx, setPickerIdx] = useState(null);
+  const [regenerating, setRegenerating] = useState(null);
 
   const saveKey = () => {
     if (!keyInput.trim()) return;
@@ -64,6 +67,41 @@ function App() {
       setErr(e.message);
     } finally {
       setLoading(false);
+    }
+  };
+
+  const regenerateSlide = async (idx, newType) => {
+    if (!apiKey) return;
+    const slide = slides[idx];
+    setRegenerating(idx);
+    setPickerIdx(null);
+    try {
+      const res = await fetch("https://api.anthropic.com/v1/messages", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+          "x-api-key": apiKey,
+          "anthropic-version": "2023-06-01",
+          "anthropic-dangerous-direct-browser-access": "true"
+        },
+        body: JSON.stringify({
+          model: "claude-sonnet-4-20250514",
+          max_tokens: 1000,
+          system: SYSTEM,
+          messages: [{ role: "user", content: `Regenerate this single slide as type "${newType}". Keep the same topic/content but adapt it to the new layout. Original slide: ${JSON.stringify(slide)}\n\nReturn ONLY a single JSON object (not an array) for the new slide.` }]
+        })
+      });
+      if (!res.ok) throw new Error("API " + res.status);
+      const data = await res.json();
+      const raw = data.content.filter(b => b.type === "text").map(b => b.text).join("");
+      const objMatch = raw.match(/\{[\s\S]*\}/);
+      if (!objMatch) throw new Error("No JSON found");
+      const newSlide = JSON.parse(objMatch[0]);
+      setSlides(prev => prev.map((s, i) => i === idx ? newSlide : s));
+    } catch (e) {
+      setErr(e.message);
+    } finally {
+      setRegenerating(null);
     }
   };
 
@@ -161,9 +199,19 @@ function App() {
             <>
               <button onClick={() => setCurrent(Math.max(0, current - 1))} disabled={current === 0} style={{ position: "absolute", left: 14, background: "rgba(255,255,255,0.07)", border: "none", borderRadius: "50%", width: 38, height: 38, fontSize: 18, color: "#fff", cursor: current === 0 ? "not-allowed" : "pointer", opacity: current === 0 ? 0.2 : 0.7, zIndex: 10 }}>‹</button>
               <button onClick={() => setCurrent(Math.min(slides.length - 1, current + 1))} disabled={current === slides.length - 1} style={{ position: "absolute", right: 14, background: "rgba(255,255,255,0.07)", border: "none", borderRadius: "50%", width: 38, height: 38, fontSize: 18, color: "#fff", cursor: current === slides.length - 1 ? "not-allowed" : "pointer", opacity: current === slides.length - 1 ? 0.2 : 0.7, zIndex: 10 }}>›</button>
-              <div style={{ boxShadow: "0 20px 80px rgba(0,0,0,0.7)", borderRadius: 6, overflow: "hidden", transform: "scale(" + zoom + ")", transition: "transform 0.1s ease-out" }}>
+              <div style={{ position: "relative", boxShadow: "0 20px 80px rgba(0,0,0,0.7)", borderRadius: 6, overflow: "hidden", transform: "scale(" + zoom + ")", transition: "transform 0.1s ease-out" }}>
                 <SlideView slide={slides[current]} index={current} total={slides.length} />
+                {regenerating === current && (
+                  <div style={{ position: "absolute", inset: 0, background: "rgba(0,0,0,0.6)", display: "flex", alignItems: "center", justifyContent: "center", backdropFilter: "blur(2px)" }}>
+                    <div style={{ fontFamily: B.hFont, fontSize: 14, color: "#fff", opacity: 0.8 }}>Regenerating…</div>
+                  </div>
+                )}
               </div>
+
+              {/* Layout change button */}
+              <button onClick={() => setPickerIdx(current)} style={{ position: "absolute", bottom: 16, left: 16, background: "rgba(0,0,0,0.6)", border: "1px solid rgba(255,255,255,0.1)", borderRadius: 8, padding: "6px 12px", color: "rgba(255,255,255,0.6)", cursor: "pointer", fontSize: 11, fontFamily: B.bFont, zIndex: 10, display: "flex", alignItems: "center", gap: 6 }}>
+                <span style={{ fontSize: 14 }}>⊞</span> Change Layout
+              </button>
 
               {/* Zoom controls */}
               <div style={{ position: "absolute", bottom: 16, right: 16, display: "flex", alignItems: "center", gap: 4, background: "rgba(0,0,0,0.6)", borderRadius: 8, padding: "4px 6px", zIndex: 10 }}>
@@ -193,6 +241,14 @@ function App() {
           )}
         </div>
       </div>
+
+      {pickerIdx !== null && slides[pickerIdx] && (
+        <LayoutPicker
+          currentType={slides[pickerIdx].type}
+          onSelect={(newType) => regenerateSlide(pickerIdx, newType)}
+          onClose={() => setPickerIdx(null)}
+        />
+      )}
     </div>
   );
 }
