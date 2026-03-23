@@ -13,6 +13,7 @@ function App() {
   const [keyInput, setKeyInput] = useState("");
   const [keySet, setKeySet] = useState(() => !!localStorage.getItem("yolo_api_key"));
   const [topic, setTopic] = useState("");
+  const [slideCount, setSlideCount] = useState(8);
   const [slides, setSlides] = useState([]);
   const [current, setCurrent] = useState(0);
   const [loading, setLoading] = useState(false);
@@ -50,7 +51,7 @@ function App() {
           model: "claude-sonnet-4-20250514",
           max_tokens: 4000,
           system: SYSTEM,
-          messages: [{ role: "user", content: `Generate a Yolo Investments deck about: "${topic}"` }]
+          messages: [{ role: "user", content: `Generate ${slideCount} slides for a Yolo Investments deck about: "${topic}"` }]
         })
       });
       if (!res.ok) throw new Error("API " + res.status);
@@ -128,6 +129,14 @@ function App() {
             <div>
               <div style={{ fontFamily: B.hFont, fontSize: 10, fontWeight: 700, letterSpacing: "0.5px", textTransform: "uppercase", color: "rgba(255,255,255,0.3)", marginBottom: 7 }}>Topic</div>
               <textarea value={topic} onChange={e => setTopic(e.target.value)} onKeyDown={e => { if (e.key === "Enter" && (e.metaKey || e.ctrlKey)) generate(); }} placeholder="e.g. Fund III Overview, Q2 Portfolio Update…" style={{ width: "100%", height: 88, background: "#181818", border: "1.5px solid #282828", borderRadius: 9, padding: "9px 10px", fontSize: 12, color: "#fff", resize: "none", fontFamily: B.bFont, outline: "none", lineHeight: 1.5 }} />
+              <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", marginTop: 7 }}>
+                <div style={{ fontFamily: B.hFont, fontSize: 10, fontWeight: 700, letterSpacing: "0.5px", textTransform: "uppercase", color: "rgba(255,255,255,0.3)" }}>Slides</div>
+                <div style={{ display: "flex", alignItems: "center", gap: 6 }}>
+                  <button onClick={() => setSlideCount(c => Math.max(1, c - 1))} style={{ background: "#181818", border: "1px solid #282828", borderRadius: 6, width: 26, height: 26, color: "#fff", cursor: "pointer", fontSize: 14, display: "flex", alignItems: "center", justifyContent: "center" }}>−</button>
+                  <span style={{ fontFamily: B.bFont, fontSize: 13, color: "#fff", minWidth: 20, textAlign: "center" }}>{slideCount}</span>
+                  <button onClick={() => setSlideCount(c => Math.min(30, c + 1))} style={{ background: "#181818", border: "1px solid #282828", borderRadius: 6, width: 26, height: 26, color: "#fff", cursor: "pointer", fontSize: 14, display: "flex", alignItems: "center", justifyContent: "center" }}>+</button>
+                </div>
+              </div>
               <button onClick={generate} disabled={!topic.trim() || loading} style={{ width: "100%", marginTop: 7, background: topic.trim() && !loading ? B.orange : "#1e1e1e", color: "#fff", border: "none", borderRadius: 9, padding: "11px 0", fontWeight: 700, cursor: topic.trim() && !loading ? "pointer" : "not-allowed", fontSize: 13, fontFamily: B.hFont, letterSpacing: "-0.3px" }}>
                 {loading ? "Generating…" : "✦ Generate Deck"}
               </button>

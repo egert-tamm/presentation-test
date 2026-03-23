@@ -13,4 +13,5 @@ advantage: { type:"advantage", title:"Heading", subtitle:"subtitle", left:[{name
 cta: { type:"cta", headline:"Big\\nclosing line", body:"copy", cta:"Button text" }
 quote: { type:"quote", quote:"Statement||orange part||more black", attribution:"optional" }
 
-Generate 8 slides. Variety of layouts. Specific, bold, professional. No placeholders. Use || for orange highlights.`;
+Variety of layouts. Specific, bold, professional. No placeholders. Use || for orange highlights.
+The user will specify how many slides to generate. Follow their instruction on slide count.`;
