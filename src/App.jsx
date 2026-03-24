@@ -4,6 +4,7 @@ import { B, W, H } from "./constants";
 import { SYSTEM } from "./prompt";
 import { SlideView } from "./components/SlideView";
 import { LayoutPicker } from "./components/LayoutPicker";
+import { EditableSlide } from "./components/EditableSlide";
 
 const MIN_ZOOM = 0.15;
 const MAX_ZOOM = 2;
@@ -199,13 +200,17 @@ function App() {
             <>
               <button onClick={() => setCurrent(Math.max(0, current - 1))} disabled={current === 0} style={{ position: "absolute", left: 14, background: "rgba(255,255,255,0.07)", border: "none", borderRadius: "50%", width: 38, height: 38, fontSize: 18, color: "#fff", cursor: current === 0 ? "not-allowed" : "pointer", opacity: current === 0 ? 0.2 : 0.7, zIndex: 10 }}>‹</button>
               <button onClick={() => setCurrent(Math.min(slides.length - 1, current + 1))} disabled={current === slides.length - 1} style={{ position: "absolute", right: 14, background: "rgba(255,255,255,0.07)", border: "none", borderRadius: "50%", width: 38, height: 38, fontSize: 18, color: "#fff", cursor: current === slides.length - 1 ? "not-allowed" : "pointer", opacity: current === slides.length - 1 ? 0.2 : 0.7, zIndex: 10 }}>›</button>
-              <div style={{ position: "relative", boxShadow: "0 20px 80px rgba(0,0,0,0.7)", borderRadius: 6, overflow: "hidden", transform: "scale(" + zoom + ")", transition: "transform 0.1s ease-out" }}>
-                <SlideView slide={slides[current]} index={current} total={slides.length} />
-                {regenerating === current && (
-                  <div style={{ position: "absolute", inset: 0, background: "rgba(0,0,0,0.6)", display: "flex", alignItems: "center", justifyContent: "center", backdropFilter: "blur(2px)" }}>
-                    <div style={{ fontFamily: B.hFont, fontSize: 14, color: "#fff", opacity: 0.8 }}>Regenerating…</div>
+              <div style={{ transform: "scale(" + zoom + ")", transition: "transform 0.1s ease-out" }}>
+                <EditableSlide slideData={slides[current]} slideIndex={current}>
+                  <div style={{ position: "relative", boxShadow: "0 20px 80px rgba(0,0,0,0.7)", borderRadius: 6, overflow: "hidden" }}>
+                    <SlideView slide={slides[current]} index={current} total={slides.length} />
+                    {regenerating === current && (
+                      <div style={{ position: "absolute", inset: 0, background: "rgba(0,0,0,0.6)", display: "flex", alignItems: "center", justifyContent: "center", backdropFilter: "blur(2px)" }}>
+                        <div style={{ fontFamily: B.hFont, fontSize: 14, color: "#fff", opacity: 0.8 }}>Regenerating…</div>
+                      </div>
+                    )}
                   </div>
-                )}
+                </EditableSlide>
               </div>
 
               {/* Layout change button */}
