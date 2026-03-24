@@ -5,6 +5,7 @@ import { SYSTEM } from "./prompt";
 import { SlideView } from "./components/SlideView";
 import { LayoutPicker } from "./components/LayoutPicker";
 import { EditableSlide } from "./components/EditableSlide";
+import { AsciiLoader } from "./components/AsciiLoader";
 
 const MIN_ZOOM = 0.15;
 const MAX_ZOOM = 2;
@@ -230,10 +231,7 @@ function App() {
           ) : (
             <div style={{ textAlign: "center" }}>
               {loading ? (
-                <>
-                  <div style={{ fontSize: 32, marginBottom: 10 }}>⏳</div>
-                  <div style={{ fontFamily: B.hFont, fontSize: 15, fontWeight: 600, color: "rgba(255,255,255,0.45)" }}>Generating…</div>
-                </>
+                <AsciiLoader />
               ) : (
                 <>
                   <div style={{ fontSize: 40, marginBottom: 10 }}>✦</div>
