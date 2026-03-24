@@ -19,10 +19,15 @@ export const Footer = ({ page, total, dark }) => {
   );
 };
 
-export const OP = ({ text, base = B.black }) => (
-  <>
-    {(text || "").split("||").map((p, i) => (
-      <span key={i} style={{ color: i % 2 === 1 ? B.orange : base }}>{p}</span>
-    ))}
-  </>
-);
+export const OP = ({ text, base = B.black }) => {
+  const parts = (text || "").split("||");
+  return (
+    <>
+      {parts.map((p, i) => {
+        let segment = p;
+        if (i > 0 && !p.startsWith(" ") && !parts[i - 1].endsWith(" ")) segment = " " + segment;
+        return <span key={i} style={{ color: i % 2 === 1 ? B.orange : base }}>{segment}</span>;
+      })}
+    </>
+  );
+};
